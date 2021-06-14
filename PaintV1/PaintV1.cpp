@@ -11,6 +11,11 @@ using namespace System::Drawing::Imaging;
 
 using namespace System;
 using namespace System::Windows::Forms;
+class shape {
+public:
+	void draw();
+};
+
 
 [STAThreadAttribute]
 void main(array<String^>^ args)
@@ -530,57 +535,236 @@ std::vector<point> drawTriangle(int width, int height, int mouseX, int mouseY)
 
 	return points;
 }
-//extern "C" double __cdecl CDECLsqrt(int x)
-//{
-//	return sqrt(x);
-//}
-//extern "C" int __cdecl myFuckingFormula(int x, int y, int i)//y * sqrt(x * x / 4 - (i * i)) / x
-//{
-//	int ret = 0;
-//	_asm
-//	{
-//		mov eax, x
-//		imul x
-//		mov edx, 0
-//		mov ebx, 4
-//		div ebx
-//		
-//		mov ecx,eax
-//
-//		mov eax, i
-//		imul i
-//
-//		sub ecx, eax
-//
-//		push eax; CDECLsqrt(x)
-//		call CDECLsqrt
-//		pop edx
-//		//функция CDECLsqrt
-//	}
-//	return y * sqrt(x / 2 * x / 2 - (i * i)) / x;
-//}
+int temp = 0;
+extern "C" void __cdecl CDECLsqrt(int x)
+{
+	temp = sqrt(x);
+}
+extern "C" void __cdecl formule(int x, int y, int i)//y * sqrt(x * x / 4 - (i * i)) / x
+{		
+	temp = y * sqrt(x * x / 4 - (i * i)) / x;
+
+	/*_asm
+	{
+		mov eax, x; eax = x
+		imul x; eax = x * x
+		mov edx, 0
+		mov ebx, 4
+		div ebx; eax = x * x / 4
+		mov ecx, eax; ecx = x * x / 4
+
+		mov eax, i
+		imul i; i * i
+
+		sub ecx, eax; x* x / (i * i)
+
+		push ecx; CDECLsqrt(x)
+		call CDECLsqrt
+		pop ecx
+
+		mov eax, y
+		imul temp; y * sqrt(x / 2 * x / 2 - (i * i))
+		mov edx, 0
+		mov ebx, x
+		div ebx; eax = y * sqrt(x / 2 * x / 2 - (i * i)) / x
+
+		mov temp, eax
+	}*/
+}
 std::vector<point> drawEllipse(int width, int height, int mouseX, int mouseY) 
 {
 	std::vector<point> points;
 	std::vector<point>* points_ptr = &points;
 	struct point p;
+	int mw = mouseX + width / 2;
+	int mh = mouseY + height / 2;
 	int i = 0;
+	_asm
+	{
+	l1:
+		;formule(int x, int y, int i) i y x
+		mov eax, i; i
+		push eax
+		mov ebx, height; y
+		push ebx
+		mov edx, width; x
+		push edx
+		call formule
+		pop eax
+		pop ebx
+		pop edx
+
+		mov ecx, mw; ecx = mouseX + width / 2
+		sub ecx, i; ecx = mouseX + width / 2 - i
+
+		mov eax, mh; mouseY + height / 2
+		sub eax, temp; mouseY + height / 2 - height * sqrt(width / 2 * width / 2 - (i * i)) / width
+
+		push eax; set_points(x, y) y x
+		push ecx
+		mov edx, points_ptr
+		push edx
+		call set_points
+		pop edx
+		pop edx
+		pop edx
+
+		mov ecx, mw; ecx = mouseX + width / 2
+		add ecx, i; ecx = mouseX + width / 2 + i
+
+		mov eax, mh; mouseY + height / 2
+		sub eax, temp; mouseY + height / 2 - height * sqrt(width / 2 * width / 2 - (i * i)) / width
+
+		push eax; set_points(x, y) y x
+		push ecx
+		mov edx, points_ptr
+		push edx
+		call set_points
+		pop edx
+		pop edx
+		pop edx
+
+		mov ecx, mw; ecx = mouseX + width / 2
+		sub ecx, i; ecx = mouseX + width / 2 - i
+
+		mov eax, mh; mouseY + height / 2
+		add eax, temp; mouseY + height / 2 + height * sqrt(width / 2 * width / 2 - (i * i)) / width
+
+		push eax; set_points(x, y) y x
+		push ecx
+		mov edx, points_ptr
+		push edx
+		call set_points
+		pop edx
+		pop edx
+		pop edx
+
+		mov ecx, mw; ecx = mouseX + width / 2
+		add ecx, i; ecx = mouseX + width / 2 + i
+
+		mov eax, mh; mouseY + height / 2
+		add eax, temp; mouseY + height / 2 + height * sqrt(width / 2 * width / 2 - (i * i)) / width
+
+		push eax; set_points(x, y) y x
+		push ecx
+		mov edx, points_ptr
+		push edx
+		call set_points
+		pop edx
+		pop edx
+		pop edx
+
+		inc i
+		mov eax, width
+		mov edx, 0
+		mov ebx, 2
+		div ebx
+		cmp i, eax; i < width / 2 ? goto l1;
+			jl l1
+
+		mov eax,0
+		mov i, 0
+
+	l2:
+		; formule(int x, int y, int i) i y x
+		mov eax, i; i
+		push eax
+		mov ebx, width; y
+		push ebx
+		mov edx, height; x
+		push edx
+		call formule
+		pop eax
+		pop ebx
+		pop edx
+
+		mov ecx, mw; ecx = mouseX + width / 2
+		sub ecx, temp; ecx = mouseX + width / 2 - width * sqrt(height / 2 * height / 2 - (i * i)) / height
+
+		mov eax, mh; mouseY + height / 2
+		sub eax, i; mouseY + height / 2 - i
+
+		push eax; set_points(x, y) y x
+		push ecx
+		mov edx, points_ptr
+		push edx
+		call set_points
+		pop edx
+		pop edx
+		pop edx
+
+		mov ecx, mw; ecx = mouseX + width / 2
+		sub ecx, temp; ecx = mouseX + width / 2 + width * sqrt(height / 2 * height / 2 - (i * i)) / height
+
+		mov eax, mh; mouseY + height / 2
+		add eax, i; mouseY + height / 2 + i
+
+		push eax; set_points(x, y) y x
+		push ecx
+		mov edx, points_ptr
+		push edx
+		call set_points
+		pop edx
+		pop edx
+		pop edx
+
+		mov ecx, mw; ecx = mouseX + width / 2
+		add ecx, temp; ecx = mouseX + width / 2 + width * sqrt(height / 2 * height / 2 - (i * i)) / height
+
+		mov eax, mh; mouseY + height / 2
+		sub eax, i; mouseY + height / 2 - i
+
+		push eax; set_points(x, y) y x
+		push ecx
+		mov edx, points_ptr
+		push edx
+		call set_points
+		pop edx
+		pop edx
+		pop edx
+
+		mov ecx, mw; ecx = mouseX + width / 2
+		add ecx, temp; ecx = mouseX + width / 2 + width * sqrt(height / 2 * height / 2 - (i * i)) / height
+
+		mov eax, mh; mouseY + height / 2
+		add eax, i; mouseY + height / 2 + i
+
+		push eax; set_points(x, y) y x
+		push ecx
+		mov edx, points_ptr
+		push edx
+		call set_points
+		pop edx
+		pop edx
+		pop edx
+
+		inc i
+		mov eax, height
+		mov edx, 0
+		mov ebx, 2
+		div ebx
+		cmp i, eax; i < width / 2 ? goto l1;
+			jl l2
+	}
+	/*int i = 0;
 	do
 	{ 
+		formule(width, height, i);
+
 		p.x = mouseX + width/2 - i;
-		p.y = mouseY + height/2 - height * sqrt(width / 2 * width / 2 - (i * i)) / width;;
+		p.y = mouseY + height/2 - temp;
 		points.emplace_back(p);
 
 		p.x = mouseX + width / 2 + i;
-		p.y = mouseY + height / 2 - height * sqrt(width / 2 * width / 2 - (i * i)) / width;
+		p.y = mouseY + height / 2 - temp;
 		points.emplace_back(p);
 
 		p.x = mouseX + width / 2 - i;
-		p.y = mouseY + height / 2 + height * sqrt(width / 2 * width / 2 - (i * i)) / width;
+		p.y = mouseY + height / 2 + temp;
 		points.emplace_back(p);
 
 		p.x = mouseX + width / 2 + i;
-		p.y = mouseY + height / 2 + height * sqrt(width / 2 * width / 2 - (i * i))/ width;
+		p.y = mouseY + height / 2 + temp;
 		points.emplace_back(p);
 		i++;
 	}
@@ -588,23 +772,130 @@ std::vector<point> drawEllipse(int width, int height, int mouseX, int mouseY)
 	int j = 0;
 	do
 	{
-		p.x = mouseX + width / 2 - width * sqrt(height / 2 * height / 2 - (j * j)) / height;
+		formule(height, width, j);
+
+		p.x = mouseX + width / 2 - temp;
 		p.y = mouseY + height / 2 - j;
 		points.emplace_back(p);
 
-		p.x = mouseX + width / 2 - width * sqrt(height / 2 * height / 2 - (j * j)) / height;
+		p.x = mouseX + width / 2 - temp;
 		p.y = mouseY + height / 2 + j;
 		points.emplace_back(p);
 
-		p.x = mouseX + width / 2 + width * sqrt(height / 2 * height / 2 - (j * j)) / height;
+		p.x = mouseX + width / 2 + temp;
 		p.y = mouseY + height / 2 - j;
 		points.emplace_back(p);
 
-		p.x = mouseX + width / 2 + width * sqrt(height / 2 * height / 2 - (j * j)) / height;
+		p.x = mouseX + width / 2 + temp;
 		p.y = mouseY + height / 2 + j;
 		points.emplace_back(p);
 		j++;
-	} 	while (j < height / 2);
+	} 	while (j < height / 2);*/
+	return points;
+}
+std::vector<point> fillEllipse(int width, int height, int mouseX, int mouseY)
+{
+	std::vector<point> points;
+	std::vector<point>* points_ptr = &points;
+	struct point p;
+	int i = 0;
+	int j = 0;
+	int mw = mouseX + width / 2;
+	int mh = mouseY + height / 2;
+	_asm
+	{
+	l1:
+		mov eax, width
+		mov edx, 0
+		mov ebx, 2
+		div ebx;eax = width / 2
+		add eax, mouseX;
+		sub eax, i; eax = mouseX + width / 2 - i
+		mov j, eax
+
+		; formule(int x, int y, int i) i y x
+		mov eax, i; i
+		push eax
+		mov ebx, height; y
+		push ebx
+		mov edx, width; x
+		push edx
+		call formule
+		pop eax
+		pop ebx
+		pop edx
+
+		mov eax, mh
+		sub eax, temp; mouseY + height / 2 - height * sqrt(width / 2 * width / 2 - (i * i)) / width
+		mov j, eax
+
+	l2:
+			mov eax, mw
+			sub eax, i
+
+			mov ecx, j
+
+			push ecx; set_points(x, y) y x
+			push eax
+			mov edx, points_ptr
+			push edx
+			call set_points
+			pop edx
+			pop edx
+			pop edx
+
+			mov eax, mw
+			add eax, i
+
+			mov ecx, j
+
+			push ecx; set_points(x, y) y x
+			push eax
+			mov edx, points_ptr
+			push edx
+			call set_points
+			pop edx
+			pop edx
+			pop edx
+
+			inc j
+			mov eax, height
+			mov edx, 0
+			mov ebx, 2
+			div ebx
+			add eax, mouseY;
+			add eax, temp; 
+			cmp j, eax; j < mouseY + height / 2 + height * sqrt(width / 2 * width / 2 - (i * i)) / width ? goto l3;
+				jl l2
+
+		inc i
+		mov eax, width
+		mov edx, 0
+		mov ebx, 2
+		div ebx
+		cmp i, eax; i < width / 2 ? goto l1;
+			jl l1
+	}
+	/*do
+	{
+		formule(width, height, i);
+
+		j = mouseY + height / 2 - temp;
+		do
+		{
+			p.x = mouseX + width / 2 - i;
+			p.y = j;
+			points.emplace_back(p);
+
+			p.x = mouseX + width / 2 + i;
+			p.y = j;
+			points.emplace_back(p);
+
+			j++;
+		} while (j < mouseY + height / 2 + temp);
+
+		i++;
+	} 	while (i < width / 2);*/
 	return points;
 }
 #pragma managed
@@ -669,7 +960,13 @@ System::Void PaintV1::PaintV1::pictureBox1_Paint(System::Object^ sender, System:
 		if (mousePosition.X != -1 && mousePosition.Y != -1)
 		{
 			if (checkBoxFill->Checked)
-				canvas->FillEllipse(brush, mouseX, mouseY, width, height);
+			{
+				std::vector<point> points = fillEllipse(width, height, mouseX, mouseY);
+				for each (struct point p in points)
+				{
+					bitmap->SetPixel(p.x, p.y, pen->Color);
+				}
+			}
 			std::vector<point> points = drawEllipse(width, height, mouseX, mouseY);
 			for each (struct point p in points)
 			{
